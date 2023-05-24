@@ -22,18 +22,25 @@ class TeraDataConnection():
         self.database = database
         self.connect()
         
-    def connect(self):
+    def __enter__(self):
         """
-        Creates the Teradata context for the connection.
+        Creates the Teradata context and establishes the connection.
         """
-
         create_context(
-            username=self.username
-            , password = self.password
-            , host = self.host
-            , logmech = self.logmech
+            username=self.username,
+            password=self.password,
+            host=self.host,
+            logmech=self.logmech
         )
         self.connection = get_connection()
+        return self.connection
+    
+    def __exit__(self, exc_type, exc_value, traceback):
+        """
+        Cleans up the connection.
+        """
+        if self.connection is not None:
+            self.connection.close()
     
     def execute_query(self,query):
         self.connection.execute(query)
