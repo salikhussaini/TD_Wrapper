@@ -10,17 +10,22 @@ from teradatasqlalchemy.types import *
 from teradataml.context.context import *
 from teradataml import create_context,DataFrame,db_list_tables
 
-
 import pandas as pd
+#specify the types
+from typing import Optional
+
 
 class TeraDataConnection():
-    def __init__(self,username,password,host,logmech,database = None):
+    def __init__(self
+                 , username: str, password: str, host: str
+                 , logmech: str, database: Optional[str] = None
+                ):
         self.username = username
         self.password = password
-        self.host=host
+        self.host = host
         self.logmech = logmech
         self.database = database
-        self.connect()
+        self.connection = None
         
     def __enter__(self):
         """
@@ -33,7 +38,7 @@ class TeraDataConnection():
             logmech=self.logmech
         )
         self.connection = get_connection()
-        return self.connection
+        return self
     
     def __exit__(self, exc_type, exc_value, traceback):
         """
@@ -41,7 +46,19 @@ class TeraDataConnection():
         """
         if self.connection is not None:
             self.connection.close()
+
+    @property
+    def connection(self):
+        return self._connection
     
+    @property
+    def database(self):
+        return self._database
+    
+    @database.setter
+    def database(self, value):
+        self._database = value    
+
     def execute_query(self,query):
         self.connection.execute(query)
 
