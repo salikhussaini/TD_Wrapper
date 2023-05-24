@@ -20,6 +20,16 @@ class TeraDataConnection():
                  , username: str, password: str, host: str
                  , logmech: str, database: Optional[str] = None
                 ):
+        """
+        Initializes a TeraDataConnection instance.
+
+        Args:
+            username (str): The username for the Teradata connection.
+            password (str): The password for the Teradata connection.
+            host (str): The hostname or IP address for the Teradata connection.
+            logmech (str): The log mechanism for the Teradata connection.
+            database (str, optional): The default database to use. Defaults to None.
+        """
         self.username = username
         self.password = password
         self.host = host
@@ -30,6 +40,9 @@ class TeraDataConnection():
     def __enter__(self):
         """
         Creates the Teradata context and establishes the connection.
+
+        Returns:
+            TeraDataConnection: The TeraDataConnection instance.
         """
         create_context(
             username=self.username,
@@ -43,26 +56,64 @@ class TeraDataConnection():
     def __exit__(self, exc_type, exc_value, traceback):
         """
         Cleans up the connection.
+
+        Args:
+            exc_type: The type of exception (if any) raised in the with block.
+            exc_value: The exception object raised (if any) in the with block.
+            traceback: The traceback object associated with the exception (if any).
         """
         if self.connection is not None:
             self.connection.close()
 
     @property
     def connection(self):
+        """
+        The connection property of the TeraDataConnection instance.
+
+        Returns:
+            Connection: The connection object.
+        """
         return self._connection
     
     @property
     def database(self):
+        """
+        The database property of the TeraDataConnection instance.
+
+        Returns:
+            str: The current default database.
+        """
         return self._database
     
     @database.setter
     def database(self, value):
+        """
+        Setter for the database property of the TeraDataConnection instance.
+
+        Args:
+            value (str): The new default database.
+        """
         self._database = value    
 
     def execute_query(self,query):
+        """
+        Executes a SQL query.
+
+        Args:
+            query (str): The SQL query to execute.
+        """
         self.connection.execute(query)
 
     def fetch_query(self,query):
+        """
+        Fetches the result of a SQL query as a Pandas DataFrame.
+
+        Args:
+            query (str): The SQL query to execute.
+
+        Returns:
+            pd.DataFrame: The result of the query as a Pandas DataFrame.
+        """
         df_list = []
         df_temp = self.connection.execute(query)
         for a in df_temp:
@@ -72,6 +123,18 @@ class TeraDataConnection():
         return(df_temp)
     
     def copy_to_table(self, dataframe, table_name,schema_name,p_idx, C_S = 16383,types_x = None):
+        """
+        Copies a DataFrame to a Teradata table.
+
+        Args:
+            dataframe (pd.DataFrame): The DataFrame to copy to the table.
+            table_name (str): The name of the target table.
+            schema_name (str): The name of the schema where the table resides.
+            p_idx (str): The primary index of the target table.
+            C_S (int, optional): The chunksize to use for the copy operation. Defaults to 16383.
+            types_x (dict, optional): A dictionary mapping column names to Teradata data types. Defaults to None.
+        """
+        
         if ((types_x != None) and (type(types_x) == dict)):
             copy_to_sql(dataframe
                         ,table_name
@@ -89,6 +152,15 @@ class TeraDataConnection():
             ,chunksize = C_S)
 
     def fast_load_to_table(self, dataframe, table_name,schema_name,p_idx):
+        """
+        Fast loads data from a DataFrame to a Teradata table.
+
+        Args:
+            dataframe (pd.DataFrame): The DataFrame to load to the table.
+            table_name (str): The name of the target table.
+            schema_name (str): The name of the schema where the table resides.
+            p_idx (str): The primary index of the target table.
+        """
         fastload(dataframe,table_name
                  ,schema_name = schema_name
                  ,primary_index=p_idx
@@ -96,6 +168,12 @@ class TeraDataConnection():
                 )
     
     def drop_table(self, table_name):
+        """
+        Drops a table in Teradata.
+
+        Args:
+            table_name (str): The name of the table to drop.
+        """
         query = f'DROP TABLE {table_name}'
         return(self.execute_sql(query))
 
